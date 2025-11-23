@@ -312,5 +312,7 @@ GitHub Repository   : https://github.com/Hari612k/digital-e-gram-panchayat
 
 Live Project URL    : https://digital-e-gram-web.web.app
 
+                      https://digital-e-gram-web.firebaseapp.com/
+
 
 Firebase Console    : https://console.firebase.google.com/project/digital-e-gram-web/overview
