@@ -1,6 +1,7 @@
 # 📌 Digital E-Gram Panchayat
 
 Developed By: Harikrishna Gangadi
+
 Technologies: HTML, CSS, JavaScript, Firebase
 
 📖 1. Overview
@@ -71,7 +72,10 @@ This project digitizes the entire workflow of service delivery at the Panchayat 
 
 -> Logout
 
+
+
 🏗️ 3. Project Folder Structure
+
 
 digital-e-gram-panchayat/
 │
@@ -105,27 +109,38 @@ digital-e-gram-panchayat/
 └── REPORT/
 └── Digital_E_Gram_Panchayat_Report.docx
 
+
+
 🔐 4. Testing Login Credentials
 
+
 👤 Citizen (User)
+
 
 | Email           | Password   |
 | --------------- | ---------- |
 | ramesh@test.com | Ramesh@123 |
 
+
 👨‍💼 Officer
+
 
 | Email                    | Password    |
 | ------------------------ | ----------- |
 | officer@panchayat.gov.in | Officer@123 |
 
+
 👨‍🔧 Staff
+
 
 | Email                  | Password  |
 | ---------------------- | --------- |
 | Staff@panchayat.gov.in | Staff@123 |
 
+
+
 🗄️ 5. Firebase Setup Required
+
 
 ✔️ Enable Authentication
 
