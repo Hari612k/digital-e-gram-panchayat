@@ -80,25 +80,23 @@ This project digitizes the entire workflow of service delivery at the Panchayat 
 digital-e-gram-panchayat/
 │
 ├── public/  
-│ ├── index.html
-│ ├── dashboard-citizen.html
-│ ├── dashboard-staff.html
-│ ├── dashboard-officer.html
-│ ├── apply-service.html
-│ ├── my-applications.html
-│ ├── profile.html
-│ ├── manage-services.html
-│ ├── view-all-applications.html
-│ │
-│ ├── css/
-│ │ └── style.css
-│ │
-│ ├── js/
-│ ├── firebase-config.js
-│ ├── navbar.js
-│ ├── logger.js
-│  
-│  
+│   ├── index.html
+│   ├── dashboard-citizen.html
+│   ├── dashboard-staff.html
+│   ├── dashboard-officer.html
+│   ├── apply-service.html
+│   ├── my-applications.html
+│   ├── profile.html
+│   ├── manage-services.html
+│   ├── view-all-applications.html
+│   │
+│   ├── css/
+│   │   └── style.css
+│   │
+│   ├── js/
+│       ├── firebase-config.js
+│       ├── navbar.js
+│       ├── logger.js
 │
 ├── firestore.rules
 ├── firestore.indexes.json
@@ -106,7 +104,6 @@ digital-e-gram-panchayat/
 ├── .firebaserc
 │
 ├── README.md
-└── REPORT/
 └── Digital_E_Gram_Panchayat_Report.docx
 
 
