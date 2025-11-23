@@ -78,32 +78,55 @@ This project digitizes the entire workflow of service delivery at the Panchayat 
 
 
 digital-e-gram-panchayat/
+
 │
+
 ├── public/  
+
 │   ├── index.html
+
 │   ├── dashboard-citizen.html
+
 │   ├── dashboard-staff.html
+
 │   ├── dashboard-officer.html
+
 │   ├── apply-service.html
+
 │   ├── my-applications.html
+
 │   ├── profile.html
+
 │   ├── manage-services.html
+
 │   ├── view-all-applications.html
+
 │   │
 │   ├── css/
+
 │   │   └── style.css
+
 │   │
 │   ├── js/
+
 │       ├── firebase-config.js
+
 │       ├── navbar.js
+
 │       ├── logger.js
+
 │
 ├── firestore.rules
+
 ├── firestore.indexes.json
+
 ├── firebase.json
+
 ├── .firebaserc
+
 │
 ├── README.md
+
 └── Digital_E_Gram_Panchayat_Report.docx
 
 
@@ -278,3 +301,16 @@ No manual creation needed except Officer and Staff accounts.
 | **Staff**   | Manage applications (approve/reject) |
 | **Officer** | Manage services + applications       |
 | 🌐 All      | Login, Logout, Navbar, Logs          |
+
+
+
+12. Links
+
+    
+GitHub Repository   : https://github.com/Hari612k/digital-e-gram-panchayat
+
+
+Live Project URL    : https://digital-e-gram-web.web.app
+
+
+Firebase Console    : https://console.firebase.google.com/project/digital-e-gram-web/overview
