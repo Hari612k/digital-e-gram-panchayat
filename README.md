@@ -83,30 +83,30 @@ digital-e-gram-panchayat/
 
 ├── public/  
 
-│   ├── index.html
+│       ├── index.html
 
-│   ├── dashboard-citizen.html
+│       ├── dashboard-citizen.html
 
-│   ├── dashboard-staff.html
+│       ├── dashboard-staff.html
 
-│   ├── dashboard-officer.html
+│       ├── dashboard-officer.html
 
-│   ├── apply-service.html
+│       ├── apply-service.html
 
-│   ├── my-applications.html
+│       ├── my-applications.html
 
-│   ├── profile.html
+│       ├── profile.html
 
-│   ├── manage-services.html
+│       ├── manage-services.html
 
-│   ├── view-all-applications.html
+│       ├── view-all-applications.html
 
 │   │
 │   ├── css/
 
-│   │   └── style.css
+│       │   └── style.css
 
-│   │
+│       │
 │   ├── js/
 
 │       ├── firebase-config.js
