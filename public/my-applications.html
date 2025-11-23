@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+      .container {
+        padding: 30px 5%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      }
+      th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+      th {
+        background: #2a5298;
+        color: white;
+      }
+      .status-pending {
+        background: #f39c12;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+      }
+      .status-approved {
+        background: #27ae60;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+      }
+      .status-rejected {
+        background: #e74c3c;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="dynamic-navbar"></div>
+
+    <div class="container">
+      <h1>My Applications</h1>
+      <div id="apps-list">Loading your applications...</div>
+    </div>
+
+    <script type="module">
+      import { auth, db } from './js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+      import { 
+        collection, 
+        query, 
+        where, 
+        getDocs, 
+        orderBy 
+      } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+      import { loadNavbar } from './js/navbar.js';
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          location.href = 'index.html';
+          return;
+        }
+
+        localStorage.setItem('userRole', 'citizen');
+        loadNavbar();
+        loadMyApplications(user.uid);
+      });
+
+      async function loadMyApplications(uid) {
+        const list = document.getElementById('apps-list');
+
+        try {
+          const q = query(
+            collection(db, "applications"),
+            where("userId", "==", uid),
+            orderBy("appliedAt", "desc")
+          );
+
+          const snapshot = await getDocs(q);
+
+          if (snapshot.empty) {
+            list.innerHTML = "<p>No applications yet.</p>";
+            return;
+          }
+
+          let table = `
+            <table>
+              <tr>
+                <th>Service</th>
+                <th>Applied On</th>
+                <th>Status</th>
+                <th>Reason</th>
+              </tr>
+          `;
+
+          snapshot.forEach(docSnap => {
+            const a = docSnap.data();
+            const date = a.appliedAt?.toDate()?.toLocaleDateString() || "N/A";
+            const statusClass =
+              a.status === "approved"
+                ? "status-approved"
+                : a.status === "rejected"
+                ? "status-rejected"
+                : "status-pending";
+
+            table += `
+              <tr>
+                <td><strong>${a.serviceName}</strong></td>
+                <td>${date}</td>
+                <td><span class="${statusClass}">${a.status.toUpperCase()}</span></td>
+                <td>${a.reason}</td>
+              </tr>
+            `;
+          });
+
+          table += `</table>`;
+          list.innerHTML = table;
+
+        } catch (err) {
+          list.innerHTML = "<p>Error loading applications: " + err.message + "</p>";
+          console.error(err);
+        }
+      }
+    </script>
+
+  </body>
+</html>

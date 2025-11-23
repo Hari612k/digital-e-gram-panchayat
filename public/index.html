@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Digital E-Gram Panchayat | Welcome</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .container {
+        max-width: 420px;
+        margin: 50px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+      .toggle-btn {
+        display: flex;
+        margin-bottom: 20px;
+      }
+      .toggle-btn button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        background: #e9ecef;
+        transition: all 0.3s;
+      }
+      .toggle-btn button.active {
+        background: #2a5298;
+        color: white;
+      }
+      input, button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+      button.primary {
+        background: #2a5298;
+        color: white;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .logo {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .logo h1 {
+        color: #1e3c72;
+        font-size: 28px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <div class="logo">
+        <h1>Digital E-Gram Panchayat</h1>
+        <p>Welcome to Digital Services</p>
+      </div>
+
+      <div class="toggle-btn">
+        <button id="login-tab" class="active">Login</button>
+        <button id="register-tab">Register</button>
+      </div>
+
+      <div id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required />
+        <input type="password" id="login-password" placeholder="Password" required />
+        <button class="primary" id="login-btn">Login</button>
+      </div>
+
+      <div id="register-form" style="display: none;">
+        <input type="text" id="reg-name" placeholder="Full Name" required />
+        <input type="email" id="reg-email" placeholder="Email" required />
+        <input type="tel" id="reg-phone" placeholder="Phone" required />
+        <input type="password" id="reg-password" placeholder="Password" required />
+        <button class="primary" id="register-btn">Create Account</button>
+      </div>
+
+      <p style="text-align: center; margin-top: 20px; color: #666;">
+        For testing:<br>
+        Officer: officer@panchayat.gov.in / Officer@123
+      </p>
+    </div>
+
+    <script type="module">
+      import { auth } from './js/firebase-config.js';
+      import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+      import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+      import { db } from './js/firebase-config.js';
+
+      document.getElementById('login-tab').onclick = () => {
+        document.getElementById('login-form').style.display = 'block';
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-tab').classList.add('active');
+        document.getElementById('register-tab').classList.remove('active');
+      };
+      document.getElementById('register-tab').onclick = () => {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'block';
+        document.getElementById('register-tab').classList.add('active');
+        document.getElementById('login-tab').classList.remove('active');
+      };
+
+      
+      document.getElementById('login-btn').onclick = async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+
+        let role = "citizen";
+        if (email.includes("officer@")) role = "officer";
+        if (email.includes("staff@")) role = "staff";
+
+        const userDoc = await getDoc(doc(db, "users", uid));
+
+        if (!userDoc.exists()) {
+           await setDoc(doc(db, "users", uid), {
+            name: email.split('@')[0],
+            email,
+            phone: "",
+            role,
+            createdAt: new Date()
+           });
+        }
+
+        localStorage.setItem('userRole', role);
+
+        if (role === "officer") location.href = 'dashboard-officer.html';
+        else if (role === "staff") location.href = 'dashboard-staff.html';
+        else location.href = 'dashboard-citizen.html';
+
+        } catch (err) {
+          alert("Login Failed: " + err.message);
+        }
+      };
+
+
+
+      document.getElementById('register-btn').onclick = async () => {
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const phone = document.getElementById('reg-phone').value;
+        const password = document.getElementById('reg-password').value;
+
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          await setDoc(doc(db, "users", cred.user.uid), {
+            name, email, phone, role: "citizen", createdAt: new Date()
+          });
+          alert("Registration Successful! Please login.");
+          document.getElementById('login-tab').click();
+        } catch (err) {
+          alert("Registration Failed: " +  err.message);
+        }
+      };
+
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const role = snap.data().role;
+            localStorage.setItem('userRole', role);
+            if (role === 'citizen') location.href = 'dashboard-citizen.html';
+            else if (role === 'staff') location.href = 'dashboard-staff.html';
+            else if (role === 'officer') location.href = 'dashboard-officer.html';
+          }
+        }
+      });
+    </script>
+
+  </body>
+</html>

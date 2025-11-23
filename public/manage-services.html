@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Services | Officer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+      .container {
+        padding: 30px 5%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .form-card, .list-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+      }
+      input, textarea, button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+      button {
+        background: #2a5298; 
+        color: white;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .service-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 14px;
+        width: auto;
+        display: inline-block;
+      }
+      .edit-btn {
+        background: #f39c12;
+      }
+      .delete-btn {
+        background: #e74c3c;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="dynamic-navbar"></div>
+
+    <div class="container">
+      <h1>Manage Services (Officer Only)</h1>
+
+      <div class="form-card">
+        <h2>Create New Services</h2>
+        <input type="text" id="title" placeholder="Service Title (e.g. Birth Certificate)">
+        <textarea id="description" rows="4" placeholder="Full Description"></textarea>
+        <input type="text" id="documents" placeholder="Required Documents (comma separated)">
+        <input type="text" id="fee" placeholder="Fee (e.g. ₹50 or Free)">
+        <button id="create-btn">Create Service</button>
+      </div>
+
+      <div class="list-card">
+        <h2>All Services</h2>
+        <div id="services-list">Loading services...</div>
+      </div>
+    </div>
+
+    <script type="module">
+  import { auth, db } from './js/firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"; 
+  import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { loadNavbar } from './js/navbar.js';
+  import { logAction } from './js/logger.js';
+
+  let editMode = false;
+  let currentEditId = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      location.href = 'index.html';
+      return;
+    }
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists() || snap.data().role !== 'officer') {
+      alert("Access Denied!");
+      location.href = 'index.html';
+    } else {
+      localStorage.setItem('userRole', 'officer');
+      loadNavbar();
+      loadServices();
+    }
+  });
+
+  document.getElementById('create-btn').onclick = async () => {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const documents = document.getElementById('documents').value;
+    const fee = document.getElementById('fee').value;
+
+    if (!title || !description) {
+      alert("Title and Description required!");
+      return;
+    }
+
+    try {
+      if (!editMode) {
+        await addDoc(collection(db, "services"), {
+          title,
+          description,
+          documentsRequired: documents ? documents.split(',').map(d => d.trim()) : [],
+          fee: fee || "Free",
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.uid
+        });
+
+        await logAction("Service Created", { title });
+        alert("Service created successfully!");
+      } else {
+        await updateDoc(doc(db, "services", currentEditId), {
+          title,
+          description,
+          documentsRequired: documents.split(",").map(x => x.trim()),
+          fee: fee,
+          updatedAt: serverTimestamp()
+        });
+
+        await logAction("Service Updated", { id: currentEditId });
+        alert("Service updated successfully!");
+
+        editMode = false;
+        currentEditId = null;
+        document.getElementById('create-btn').textContent = "Create Service";
+      }
+
+      document.getElementById('title').value = '';
+      document.getElementById('description').value = '';
+      document.getElementById('documents').value = '';
+      document.getElementById('fee').value = '';
+
+      loadServices();
+
+    } catch (err) {
+      alert("Error: " + err.message);
+      console.error(err);
+    }
+  };
+
+  async function loadServices() {
+    const list = document.getElementById('services-list');
+    list.innerHTML = "<p>Loading...</p>";
+
+    try {
+      const querySnapshot = await getDocs(collection(db, "services"));
+      if (querySnapshot.empty) {
+        list.innerHTML = "<p>No services yet. Create one!</p>";
+        return;
+      }
+
+      list.innerHTML = "";
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const div = document.createElement('div');
+        div.className = 'service-item';
+        div.innerHTML = `
+          <div>
+            <strong>${data.title}</strong><br>
+            <small>${data.description}</small><br>
+            <small>Fee: ${data.fee} | Docs: ${data.documentsRequired?.join(', ')}</small>
+          </div>
+          <div>
+            <button class="btn-small edit-btn" data-id="${docSnap.id}">Edit</button>
+            <button class="btn-small delete-btn" data-id="${docSnap.id}">Delete</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("Delete this service?")) {
+            try {
+              await deleteDoc(doc(db, "services", btn.dataset.id));
+              await logAction("Service Deleted", { id: btn.dataset.id });
+              loadServices();
+            } catch (err) {
+              alert("Delete failed: " + err.message);
+              console.error(err);
+            }
+          }
+        };
+      });
+
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.id;
+
+          const snap = await getDoc(doc(db, "services", id));
+          if (!snap.exists()) return alert("Service not found!");
+
+          const s = snap.data();
+
+          document.getElementById('title').value = s.title;
+          document.getElementById('description').value = s.description;
+          document.getElementById('documents').value = s.documentsRequired.join(", ");
+          document.getElementById('fee').value = s.fee;
+
+          editMode = true;
+          currentEditId = id;
+          document.getElementById('create-btn').textContent = "Update Service";
+        };
+      });
+
+    } catch (err) {
+      list.innerHTML = "<p>Error loading services.</p>";
+      console.error(err);
+    }
+  }
+</script>
+
+  </body>
+</html>

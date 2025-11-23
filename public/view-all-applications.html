@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Applications</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+      .container {
+        padding: 30px 5%;
+      }
+      select {
+        padding: 8px;
+        margin-left: 10px;
+        border-radius: 8px;
+      }
+      .status-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+      }
+      .approved {
+        background: #27ae60;
+      }
+      .rejected {
+        background: #e74c3c;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="dynamic-navbar"></div>
+    <div class="container">
+      <h1>All Applications (Staff/Officer)</h1>
+      <div id="all-apps">Loading...</div>
+    </div>
+
+    <script type="module">
+      import { auth, db } from './js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+      import { collection, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+      import { loadNavbar } from './js/navbar.js';
+      import { logAction } from './js/logger.js';
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          location.href = 'index.html';
+          return;
+        }
+        const role = localStorage.getItem('userRole');
+        if (role !== 'staff' && role !== 'officer') {
+          location.href = 'index.html';
+          return;
+        }
+        loadNavbar();
+        loadAllApps();
+      });
+
+      async function loadAllApps() {
+        try {
+          const div = document.getElementById('all-apps');
+          const snapshot = await getDocs(collection(db, "applications"));
+          if (snapshot.empty) {
+            div.innerHTML = "<p>No applications.</p>";
+            return;
+          }
+
+          let html = `<table style="width:100%; border-collapse:collapse;"><tr style="background:#2a5298;color:white;">
+            <th>Applicant</th><th>Service</th><th>Status</th><th>Action</th></tr>`;
+
+          snapshot.forEach(d => {
+            const a = d.data();
+            html += `<tr>
+              <td>${a.userEmail}</td>
+              <td>${a.serviceName}</td>
+              <td><strong>${a.status.toUpperCase()}</strong></td>
+              <td>
+                <button class="status-btn approved" onclick="updateStatus('${d.id}', 'approved')">Approve</button>
+                <button class="status-btn rejected" onclick="updateStatus('${d.id}', 'rejected')">Reject</button>
+              </td>
+            </tr>`;
+          });
+          html += `</table>`;
+          div.innerHTML = html;
+        } catch (err) {
+          console.error(err);
+          document.getElementById('all-apps').innerHTML = "<p>Error loading applications.</p>";
+        }
+      }
+
+      window.updateStatus = async (id, newStatus) => {
+        if (confirm(`Mark as ${newStatus}?`)) {
+          try {
+            await updateDoc(doc(db, "applications", id), {
+              status: newStatus,
+              updatedAt: serverTimestamp()
+            });
+            await logAction("Application Status Updated", { appId: id, newStatus });
+            loadAllApps();
+          } catch (err) {
+            alert("Update failed: " + err.message);
+            console.error(err);
+          }
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Citizen Dashboard | Digital E-Gram Panchayat</title>
+        <link rel="stylesheet" href="css/style.css" />
+        <style>
+            .dashboard {
+                padding: 40px 5%;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .welcome {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 40px;
+                border-radius: 16px;
+                text-align: center;
+                margin-bottom: 40px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            .cards {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minimax(280px, 1fr));
+                gap: 25px;
+            }
+            .card {
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                text-align: center;
+                transition: transform 0.3s;
+            }
+            .card-hover {
+                transform: translateY(-10px);
+            }
+            .card h3 {
+                color: #2a5298;
+                margin-bottom: 15px;
+            }
+            .btn {
+                display: inline-block;
+                background: #2a5298;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                text-decoration: none;
+                margin-top: 15px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="dynamic-navbar"></div>
+
+        <div class="dashboard">
+            <div class="welcome">
+                <h1>Welcome back, Citizen!</h1>
+                <p>You can now apply for services and track your applications easily.</p>
+            </div>
+
+            <div class="cards">
+                <div class="card">
+                    <h3>Search & Apply Services</h3>
+                    <p>Browse all available government services</p>
+                    <a href="apply-service.html" class="btn">Apply Now</a>
+                </div>
+                <div class="card">
+                    <h3>My Applications</h3>
+                    <p>Track status of your submitted applications</p>
+                    <a href="my-applications.html" class="btn">View Status</a>
+                </div>
+                <div class="card">
+                    <h3>My Profile</h3>
+                    <p>Update your personal information</p>
+                    <a href="profile.html" class="btn">View Profile</a>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+           import { auth } from './js/firebase-config.js';
+           import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+           import { loadNavbar } from './js/navbar.js';
+           import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+           import { db } from './js/firebase-config.js';
+
+           onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                location.href = 'index.html';
+                return;
+            }
+
+            const snap = await getDoc(doc(db, "users", user.uid));
+            if (snap.exists() && snap.data().role === 'citizen') {
+                localStorage.setItem('userRole', 'citizen');
+                loadNavbar();
+                document.querySelector('.welcome h1').innerText = `Welcome, ${snap.data().name || 'Citizen'}!`;
+            } else {
+                location.href = 'index.html';
+            }
+           });
+        </script>
+    </body>
+</html>

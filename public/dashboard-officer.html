@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Officer Dashboard</title>
+        <link rel="stylesheet" href="css/style.css">
+        <style>
+            .dashboard {
+                padding: 40px 5%;
+            }
+            .welcome {
+                background: linear-gradient(135deg, #8E2DE2, #4A00E0);
+                color: white;
+                padding: 50px;
+                border-radius: 16px;
+                text-align: center;
+                margin-bottom: 40px;
+            }
+            .cards {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minimax(300px, 1fr));
+                gap: 30px;
+            }
+            .card {
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                text-align: center;
+            }
+            .btn {
+                background: #4A00E0;
+                color: white;
+                padding: 14px 28px;
+                border-radius: 8px;
+                text-decoration: none;
+                display: inline-block;
+                margin-top: 15px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="dynamic-navbar"></div>
+        <div class="dashboard">
+            <div class="welcome">
+                <h1>Officer Dashboard</h1>
+                <p>Full control over services and applications</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <h3>Manage Services</h3>
+                    <p>Create, Update or Delete Services</p>
+                    <a href="manage-services.html" class="btn">Go to Services</a>
+                </div>
+                <div class="card">
+                    <h3>All Applications</h3>
+                    <p>View and approve/reject applications</p>
+                    <a href="view-all-applications.html" class="btn">View Applications</a>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+           import { auth } from './js/firebase-config.js';
+           import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+           import { loadNavbar } from './js/navbar.js';
+
+           onAuthStateChanged(auth, (user) => {
+            if (!user) location.href = 'index.html';
+            else {
+                localStorage.setItem('userRole', 'officer');
+                loadNavbar();
+            }
+           });
+        </script>
+    </body>
+</html>

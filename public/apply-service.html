@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Service | Digital E-Gram Panchayat</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+      .container {
+        padding: 30px 5%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .search-box {
+        margin-bottom: 30px;
+        text-align: center;
+      }
+      .search-box input {
+        width: 70%;
+        max-width: 500px;
+        padding: 15px;
+        font-size: 18px;
+        border-radius: 50px;
+        border: 2px solid #2a5298;
+      }
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+      }
+      .service-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0  8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+        border: 2px solid transparent;
+      }
+      .service-card:hover {
+        transform: translateY(-10px);
+        border-color: #2a5298;
+      }
+      .service-title {
+        color: #2a5298;
+        font-size: 20px;
+        font-weight: bold;
+      }
+      .apply-btn {
+        background: #2a5298;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        width: 100%;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="dynamic-navbar"></div>
+
+    <div class="container">
+      <h1 style="text-align: center; color: #2a5298;">Available Services</h1>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search services (e.g. Birth, Death, Income)...">
+      </div>
+
+      <div id="services-grid" class="services-grid"></div>
+    </div>
+
+    <div id="applyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999;">
+      <div style="background: white; margin: 5% auto; padding: 30px; max-width: 600px; border-radius: 16px;">
+        <h2 id="modalTitle">Apply for Service</h2>
+        <p><strong>Required Documents:</strong> <span id="modalDocs"></span></p>
+        <p><strong>Fee:</strong> <span id="modalFee"></span></p>
+        <textarea id="reason" placeholder="Reason for applying (optional)" rows="4" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px;"></textarea>
+        <div style="text-align: right;">
+          <button onclick="closeModal()" style="background: #95a5a6; margin-right: 10px;">Cancel</button>
+          <button id="submitApplication" style="background: #27ae60;">Submit Application</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { auth, db } from './js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+      import { collection, getDocs, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+      import { loadNavbar } from './js/navbar.js';
+      import { logAction } from './js/logger.js';
+
+      let selectedServiceId = null;
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          location.href = 'index.html';
+          return;
+        }
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists() && snap.data().role === 'citizen') {
+          localStorage.setItem('userRole', 'citizen');
+          loadNavbar();
+          loadAllServices();
+        } else {
+          location.href = 'index.html';
+        }
+      });
+
+      async function loadAllServices() {
+        const grid = document.getElementById('services-grid');
+        grid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">Loading services...</p>';
+
+        try {
+          const querySnapshot = await getDocs(collection(db, "services"));
+          if (querySnapshot.empty) {
+            grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; color:orange;">No services available yet. Please check later.</p>';
+            return;
+          }
+
+          grid.innerHTML = "";
+          querySnapshot.forEach((docSnap) => {
+            const s = docSnap.data();
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+              <div class="service-title">${s.title}</div>
+              <p>${s.description}</p>
+              <small><strong>Fee:</strong> ${s.fee} | <strong>Documents:</strong> ${s.documentsRequired?.join(', ')}</small>
+              <button class="apply-btn" data-id="${docSnap.id}" data-title="${s.title}" 
+                      data-docs="${s.documentsRequired?.join(', ')}" data-fee="${s.fee}">
+                Apply Now
+              </button>
+            `;
+            grid.appendChild(card);
+          });
+
+          document.querySelectorAll('.apply-btn').forEach(btn => {
+            btn.onclick = () => {
+              selectedServiceId = btn.dataset.id;
+              document.getElementById('modalTitle').innerText = `Apply for: ${btn.dataset.title}`;
+              document.getElementById('modalDocs').innerText = btn.dataset.docs;
+              document.getElementById('modalFee').innerText = btn.dataset.fee;
+              document.getElementById('applyModal').style.display = 'block';
+            };
+          });
+
+        } catch (err) {
+          grid.innerHTML = '<p style="color:red;">Error loading services.</p>';
+          console.error(err);
+        }
+      }
+
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.service-card').forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(term) ? 'block' : 'none';
+        });
+      });
+
+      document.getElementById('submitApplication').onclick = async () => {
+        if (!selectedServiceId) return;
+
+        try {
+          await addDoc(collection(db, "applications"), {
+            userId: auth.currentUser.uid,
+            userEmail: auth.currentUser.email,
+            serviceId: selectedServiceId,
+            serviceName: document.getElementById('modalTitle').innerText.replace('Apply for: ', ''),
+            reason: document.getElementById('reason').value || "No reason provided",
+            status: "pending",
+            appliedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+
+          await logAction("Application Submitted", { serviceId: selectedServiceId });
+          alert("Application submitted successfully! Track it in 'My Applications'");
+          closeModal();
+        } catch (err) {
+          alert("Submission failed: " + err.message);
+          console.error(err);
+        }
+      };
+
+      window.closeModal = () => {
+        document.getElementById('applyModal').style.display = 'none';
+        document.getElementById('reason').value = '';
+      };
+
+    </script>
+  </body>
+</html>

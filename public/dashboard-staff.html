@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Staff Dashboard</title>
+        <link rel="stylesheet" href="css/style.css">
+        <style>
+            .dashboard {
+                padding: 40px 5%;
+                text-align: center;
+            }
+            .welcome {
+                background: #11998e;
+                color: white;
+                padding: 50px;
+                border-radius: 16px;
+                margin-bottom: 40px;
+            }
+            .big-btn {
+                display: inline-block;
+                background: #38ef7d;
+                color: #000;
+                padding: 20px 40px;
+                font-size: 20px;
+                font-weight: bold;
+                border-radius: 12px;
+                text-decoration: none;
+                margin: 20px;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="dynamic-navbar"></div>
+        <div class="dashboard">
+            <div class="welcome">
+                <h1>Staff Dashboard</h1>
+                <p>Manage and update application statuses</p>
+            </div>
+            <a href="view-all-applications.html" class="big-btn">View All Applications</a>
+        </div>
+
+        <script type="module">
+           import { auth } from './js/firebase-config.js';
+           import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+           import { loadNavbar } from './js/navbar.js';
+
+           onAuthStateChanged(auth, (user) => {
+            if (!user) location.href = 'index.html';
+            else {
+                localStorage.setItem('userRole', 'staff');
+                loadNavbar();
+            }
+           });
+        </script>
+    </body>
+</html>

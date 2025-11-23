@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div id="dynamic-navbar"></div>
+    <div style="padding: 50px; text-align: center;">
+      <h1>My Profile</h1>
+      <div id="profile-data">Loading...</div>
+    </div>
+
+    <script type="module">
+      import { auth, db } from './js/firebase-config.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+      import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+      import { loadNavbar } from './js/navbar.js';
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          location.href = 'index.html';
+          return;
+        }
+        loadNavbar();
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          document.getElementById('profile-data').innerHTML = `
+            <h2>${d.name}</h2>
+            <p>Email: ${d.email}</p>
+            <p>Phone: ${d.phone}</p>
+            <p>Role: ${d.role}</p>
+          `;
+        }
+      });
+    </script>
+  </body>
+</html>
